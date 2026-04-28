@@ -1,9 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import '../app/theme.dart';
+import '../widgets/jilid_card.dart'; // sesuaikan path import
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  // ── Data semua jilid — ubah subtitle sesuai kurikulum ──────────────────────
+  static const List<JilidData> _jilidList = [
+    JilidData(nomor: 1, subtitle: 'Mengenal Aksara Dasar'),
+    JilidData(nomor: 2, subtitle: 'Sandhangan '),
+    JilidData(nomor: 3, subtitle: 'Pasangan Aksara'),
+    JilidData(nomor: 4, subtitle: 'Sandhangan Panyigeg'),
+    JilidData(nomor: 5, subtitle: 'Aksara Murda & Swara'),
+    JilidData(nomor: 6, subtitle: 'Angka Jawa & Tanda Baca'),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -14,112 +24,52 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             children: [
               const SizedBox(height: 48),
-
-              // Header
-              Text(
-                'ꦲꦤꦕꦫꦏ',
-                style: AppTheme.aksaraStyle(
-                  fontSize: 52,
-                  color: AppTheme.primary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                "Iqra' Hanacaraka",
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textDark,
-                ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Belajar Aksara Jawa dengan Metode Iqra\'',
-                style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
-                textAlign: TextAlign.center,
-              ),
-
+              _buildHeader(),
               const SizedBox(height: 40),
-
-              // Daftar Jilid
-              Expanded(
-                child: ListView.separated(
-                  itemCount: 6,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, i) {
-                    final int nomor = i + 1;
-                    return Card(
-                      child: InkWell(
-                        onTap: () => context.go('/jilid/$nomor'),
-                        borderRadius: BorderRadius.circular(16),
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Row(
-                            children: [
-                              // Nomor Jilid
-                              Container(
-                                width: 56,
-                                height: 56,
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primary,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    '$nomor',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-
-                              // Teks
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Jilid $nomor',
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppTheme.textDark,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Mengenal Aksara Dasar',
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        color: AppTheme.textMuted,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              // Arrow
-                              const Icon(
-                                Icons.chevron_right,
-                                color: AppTheme.primary,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
+              Expanded(child: _buildJilidList()),
               const SizedBox(height: 24),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  // ── Header ─────────────────────────────────────────────────────────────────
+
+  Widget _buildHeader() {
+    return Column(
+      children: [
+        Text(
+          'ꦲꦤꦕꦫꦏ',
+          style: AppTheme.aksaraStyle(fontSize: 52, color: AppTheme.primary),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          "Iqra' Hanacaraka",
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textDark,
+          ),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          "Belajar Aksara Jawa dengan Metode Iqra'",
+          style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  // ── List jilid ─────────────────────────────────────────────────────────────
+
+  Widget _buildJilidList() {
+    return ListView.separated(
+      itemCount: _jilidList.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      itemBuilder: (context, i) => JilidCard(jilid: _jilidList[i]),
     );
   }
 }

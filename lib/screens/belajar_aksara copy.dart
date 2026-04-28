@@ -149,7 +149,6 @@ class _BelajarAksaraScreenState extends State<BelajarAksaraScreen> {
                     switch (tipe) {
                       'divider' => _HalamanDivider(data: data),
                       'contoh' => _HalamanContoh(data: data),
-                      'pasangan' => _HalamanPasangan(data: data),
                       _ => _HalamanBaca(data: data),
                     },
 
@@ -300,7 +299,7 @@ class _HalamanDivider extends StatelessWidget {
   }
 }
 
-/// Tipe: 'contoh' — pengenalan sandangan/pasangan + contoh bacaan
+/// Tipe: 'contoh' — pengenalan sandangan + contoh bacaan
 class _HalamanContoh extends StatelessWidget {
   final Map<String, dynamic> data;
   const _HalamanContoh({required this.data});
@@ -317,7 +316,7 @@ class _HalamanContoh extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          // Badge huruf/sandangan/pasangan baru
+          // Badge sandangan baru
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 14),
@@ -356,7 +355,7 @@ class _HalamanContoh extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // Penjelasan
+          // Penjelasan sandangan
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(14),
@@ -557,167 +556,6 @@ class _HalamanBaca extends StatelessWidget {
                                 style: AppTheme.aksaraStyle(fontSize: fontSize),
                               ),
                             ),
-                          ),
-                        );
-                      }).toList(),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-/// Tipe: 'pasangan' — latihan baca aksara + pasangannya
-class _HalamanPasangan extends StatelessWidget {
-  final Map<String, dynamic> data;
-  const _HalamanPasangan({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    final List<String> hurufBaru = List<String>.from(data['hurufBaru']);
-    final List<String> namaHuruf = List<String>.from(data['namaHuruf']);
-    final List<List<Map<String, dynamic>>> baris = (data['halaman'] as List)
-        .map(
-          (b) => (b as List)
-              .map((e) => Map<String, dynamic>.from(e as Map))
-              .toList(),
-        )
-        .toList();
-    final String? penjelasan = data['penjelasan'] as String?;
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const int jumlahKolom = 3;
-        const double horizontalPadding = 20 * 2;
-        const double totalGap = 8 * (jumlahKolom - 1);
-        final double cellSize =
-            (constraints.maxWidth - horizontalPadding - totalGap) / jumlahKolom;
-        final double fontSize = (cellSize * 0.38).clamp(18.0, 34.0);
-
-        return Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              // ── Header pasangan baru ──────────────────────────────────
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                decoration: BoxDecoration(
-                  color: AppTheme.primary,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(hurufBaru.length, (i) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Column(
-                        children: [
-                          Text(
-                            hurufBaru[i],
-                            style: AppTheme.aksaraStyle(
-                              fontSize: 40,
-                              color: Colors.white,
-                            ),
-                          ),
-                          Text(
-                            namaHuruf[i],
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // ── Label ─────────────────────────────────────────────────
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  penjelasan ?? 'Baca pasangan berikut:',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.textMuted,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // ── Grid pasangan ─────────────────────────────────────────
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: baris.map((row) {
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: row.map((sel) {
-                        final String gabung = sel['gabung'] as String;
-                        final String bacaan = sel['bacaan'] as String;
-                        // Highlight semua sel — karena ini halaman latihan pasangan spesifik
-                        final bool isPasanganBaru = hurufBaru.any(
-                          (h) => gabung.contains(h.replaceAll('꧀', '')),
-                        );
-
-                        return Container(
-                          width: cellSize,
-                          height: cellSize * 1.15,
-                          decoration: BoxDecoration(
-                            color: isPasanganBaru
-                                ? AppTheme.secondary.withOpacity(0.15)
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(
-                              (cellSize * 0.18).clamp(6.0, 12.0),
-                            ),
-                            border: Border.all(
-                              color: isPasanganBaru
-                                  ? AppTheme.secondary
-                                  : AppTheme.secondary.withOpacity(0.3),
-                              width: isPasanganBaru ? 2 : 1,
-                            ),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // Aksara gabungan — font render otomatis pasangan di bawah
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                ),
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    gabung,
-                                    style: AppTheme.aksaraStyle(
-                                      fontSize: fontSize,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              // Label bacaan
-                              Text(
-                                bacaan,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: AppTheme.textMuted,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
                           ),
                         );
                       }).toList(),
