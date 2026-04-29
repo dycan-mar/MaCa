@@ -1146,5 +1146,4 @@ const List<Map<String, dynamic>> jilid3 = [
 const Map<int, List<Map<String, dynamic>>> semuaJilid = {
   1: jilid1,
   2: jilid2,
-  3: jilid3,
 };

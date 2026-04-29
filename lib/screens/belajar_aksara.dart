@@ -3,31 +3,50 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../app/theme.dart';
 import '../data/aksara_data.dart';
+import 'coming_soon.dart';
 
 class BelajarAksaraScreen extends StatefulWidget {
   final int nomorJilid;
+  final int? halamanAwal;
 
-  const BelajarAksaraScreen({super.key, required this.nomorJilid});
+  const BelajarAksaraScreen({
+    super.key,
+    required this.nomorJilid,
+    this.halamanAwal,
+  });
 
   @override
   State<BelajarAksaraScreen> createState() => _BelajarAksaraScreenState();
 }
 
 class _BelajarAksaraScreenState extends State<BelajarAksaraScreen> {
-  int _halamanSaatIni = 0;
+  late int _halamanSaatIni;
   int? _halamanBookmark;
-  final PageController _pageController = PageController();
+  late final PageController _pageController;
 
   // ── Ambil data jilid yang benar ────────────────────────────────────────────
   List<Map<String, dynamic>> get _dataJilid =>
-      semuaJilid[widget.nomorJilid] ?? jilid1;
+      semuaJilid[widget.nomorJilid] ?? [];
+
+  bool get _hasData => semuaJilid.containsKey(widget.nomorJilid);
 
   String get _bookmarkKey => 'bookmark_jilid_${widget.nomorJilid}';
 
   @override
   void initState() {
     super.initState();
+    _halamanSaatIni = widget.halamanAwal ?? 0;
+    if (_halamanSaatIni >= _dataJilid.length) {
+      _halamanSaatIni = 0;
+    }
+    _pageController = PageController(initialPage: _halamanSaatIni);
     _loadBookmark();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadBookmark() async {
@@ -97,6 +116,11 @@ class _BelajarAksaraScreenState extends State<BelajarAksaraScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Validasi: jika data jilid tidak ada, tampilkan coming soon
+    if (!_hasData) {
+      return ComingSoonScreen(nomorJilid: widget.nomorJilid);
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Jilid ${widget.nomorJilid}'),
@@ -146,12 +170,25 @@ class _BelajarAksaraScreenState extends State<BelajarAksaraScreen> {
                 return Stack(
                   children: [
                     // ── Pilih widget sesuai tipe ──────────────────────────
-                    switch (tipe) {
-                      'divider' => _HalamanDivider(data: data),
-                      'contoh' => _HalamanContoh(data: data),
-                      'pasangan' => _HalamanPasangan(data: data),
-                      _ => _HalamanBaca(data: data),
-                    },
+                    Builder(
+                      builder: (context) {
+                        late final Widget halaman;
+                        switch (tipe) {
+                          case 'divider':
+                            halaman = _HalamanDivider(data: data);
+                            break;
+                          case 'contoh':
+                            halaman = _HalamanContoh(data: data);
+                            break;
+                          case 'pasangan':
+                            halaman = _HalamanPasangan(data: data);
+                            break;
+                          default:
+                            halaman = _HalamanBaca(data: data);
+                        }
+                        return halaman;
+                      },
+                    ),
 
                     // ── Bookmark tab ──────────────────────────────────────
                     Positioned(
@@ -168,7 +205,7 @@ class _BelajarAksaraScreenState extends State<BelajarAksaraScreen> {
                           decoration: BoxDecoration(
                             color: isHalamanIniBookmark
                                 ? Colors.amber
-                                : Colors.grey.withOpacity(0.3),
+                                : Colors.grey.withOpacity(0.7),
                             borderRadius: const BorderRadius.only(
                               bottomLeft: Radius.circular(6),
                               bottomRight: Radius.circular(6),
@@ -193,7 +230,7 @@ class _BelajarAksaraScreenState extends State<BelajarAksaraScreen> {
                                     : Icons.bookmark_border,
                                 color: isHalamanIniBookmark
                                     ? Colors.white
-                                    : Colors.grey,
+                                    : Colors.grey[200],
                                 size: 18,
                               ),
                             ),
@@ -313,110 +350,117 @@ class _HalamanContoh extends StatelessWidget {
         .map((e) => Map<String, dynamic>.from(e as Map))
         .toList();
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          // Badge huruf/sandangan/pasangan baru
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
-              color: AppTheme.primary,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(hurufBaru.length, (i) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Column(
-                    children: [
-                      Text(
-                        hurufBaru[i],
-                        style: AppTheme.aksaraStyle(
-                          fontSize: 40,
-                          color: Colors.white,
-                        ),
-                      ),
-                      Text(
-                        namaHuruf[i],
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // Penjelasan
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppTheme.secondary.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppTheme.secondary.withOpacity(0.3)),
-            ),
-            child: Text(
-              data['penjelasan'] as String,
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppTheme.textDark,
-                height: 1.6,
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Grid contoh aksara + bacaan
-          GridView.count(
-            crossAxisCount: 3,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: 1.1,
-            children: contoh.map((c) {
-              return Container(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount = constraints.maxWidth < 380 ? 2 : 3;
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              // Badge huruf/sandangan/pasangan baru
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppTheme.primary,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(hurufBaru.length, (i) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Column(
+                        children: [
+                          Text(
+                            hurufBaru[i],
+                            style: AppTheme.aksaraStyle(
+                              fontSize: 40,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            namaHuruf[i],
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Penjelasan
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppTheme.secondary.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: AppTheme.secondary.withOpacity(0.4),
+                    color: AppTheme.secondary.withOpacity(0.3),
                   ),
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      c['aksara'] as String,
-                      style: AppTheme.aksaraStyle(fontSize: 28),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      c['bacaan'] as String,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppTheme.textMuted,
-                        fontWeight: FontWeight.w600,
+                child: Text(
+                  data['penjelasan'] as String,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppTheme.textDark,
+                    height: 1.6,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Grid contoh aksara + bacaan
+              GridView.count(
+                crossAxisCount: crossAxisCount,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                childAspectRatio: 1.1,
+                children: contoh.map((c) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: AppTheme.secondary.withOpacity(0.4),
                       ),
                     ),
-                  ],
-                ),
-              );
-            }).toList(),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          c['aksara'] as String,
+                          style: AppTheme.aksaraStyle(fontSize: 28),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          c['bacaan'] as String,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.textMuted,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -515,53 +559,61 @@ class _HalamanBaca extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              // Grid huruf — ukuran responsif
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: baris.map((row) {
-                    // Kalau taling dipaksa 4 kolom, potong baris yang lebih dari 4
-                    final displayRow = isTaling && row.length > jumlahKolom
-                        ? row.sublist(0, jumlahKolom)
-                        : row;
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: displayRow.map((huruf) {
-                        final bool isHurufBaru = hurufBaru.contains(huruf);
-                        return Container(
-                          width: cellSize,
-                          height: cellSize,
-                          decoration: BoxDecoration(
-                            color: isHurufBaru
-                                ? AppTheme.secondary.withOpacity(0.15)
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(
-                              (cellSize * 0.18).clamp(6.0, 12.0),
-                            ),
-                            border: Border.all(
-                              color: isHurufBaru
-                                  ? AppTheme.secondary
-                                  : AppTheme.secondary.withOpacity(0.3),
-                              width: isHurufBaru ? 2 : 1,
-                            ),
-                          ),
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: cellPaddingH,
-                              vertical: cellPaddingV,
-                            ),
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                huruf,
-                                style: AppTheme.aksaraStyle(fontSize: fontSize),
+              // Grid huruf — isi dapat digulir jika terlalu tinggi
+              Flexible(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: baris.map((row) {
+                      // Kalau taling dipaksa 4 kolom, potong baris yang lebih dari 4
+                      final displayRow = isTaling && row.length > jumlahKolom
+                          ? row.sublist(0, jumlahKolom)
+                          : row;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: displayRow.map((huruf) {
+                            final bool isHurufBaru = hurufBaru.contains(huruf);
+                            return Container(
+                              width: cellSize,
+                              height: cellSize,
+                              decoration: BoxDecoration(
+                                color: isHurufBaru
+                                    ? AppTheme.secondary.withOpacity(0.15)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(
+                                  (cellSize * 0.18).clamp(6.0, 12.0),
+                                ),
+                                border: Border.all(
+                                  color: isHurufBaru
+                                      ? AppTheme.secondary
+                                      : AppTheme.secondary.withOpacity(0.3),
+                                  width: isHurufBaru ? 2 : 1,
+                                ),
                               ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    );
-                  }).toList(),
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: cellPaddingH,
+                                  vertical: cellPaddingV,
+                                ),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    huruf,
+                                    style: AppTheme.aksaraStyle(
+                                      fontSize: fontSize,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
             ],
@@ -658,71 +710,77 @@ class _HalamanPasangan extends StatelessWidget {
               const SizedBox(height: 12),
 
               // ── Grid pasangan ─────────────────────────────────────────
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: baris.map((row) {
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: row.map((sel) {
-                        final String gabung = sel['gabung'] as String;
-                        final String bacaan = sel['bacaan'] as String;
-                        // Highlight semua sel — karena ini halaman latihan pasangan spesifik
-                        final bool isPasanganBaru = hurufBaru.any(
-                          (h) => gabung.contains(h.replaceAll('꧀', '')),
-                        );
+              Flexible(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: baris.map((row) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: row.map((sel) {
+                            final String gabung = sel['gabung'] as String;
+                            final String bacaan = sel['bacaan'] as String;
+                            // Highlight semua sel — karena ini halaman latihan pasangan spesifik
+                            final bool isPasanganBaru = hurufBaru.any(
+                              (h) => gabung.contains(h.replaceAll('꧀', '')),
+                            );
 
-                        return Container(
-                          width: cellSize,
-                          height: cellSize * 1.15,
-                          decoration: BoxDecoration(
-                            color: isPasanganBaru
-                                ? AppTheme.secondary.withOpacity(0.15)
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(
-                              (cellSize * 0.18).clamp(6.0, 12.0),
-                            ),
-                            border: Border.all(
-                              color: isPasanganBaru
-                                  ? AppTheme.secondary
-                                  : AppTheme.secondary.withOpacity(0.3),
-                              width: isPasanganBaru ? 2 : 1,
-                            ),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // Aksara gabungan — font render otomatis pasangan di bawah
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
+                            return Container(
+                              width: cellSize,
+                              height: cellSize * 1.15,
+                              decoration: BoxDecoration(
+                                color: isPasanganBaru
+                                    ? AppTheme.secondary.withOpacity(0.15)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(
+                                  (cellSize * 0.18).clamp(6.0, 12.0),
                                 ),
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    gabung,
-                                    style: AppTheme.aksaraStyle(
-                                      fontSize: fontSize,
+                                border: Border.all(
+                                  color: isPasanganBaru
+                                      ? AppTheme.secondary
+                                      : AppTheme.secondary.withOpacity(0.3),
+                                  width: isPasanganBaru ? 2 : 1,
+                                ),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  // Aksara gabungan — font render otomatis pasangan di bawah
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                    ),
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        gabung,
+                                        style: AppTheme.aksaraStyle(
+                                          fontSize: fontSize,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
+                                  const SizedBox(height: 4),
+                                  // Label bacaan
+                                  Text(
+                                    bacaan,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppTheme.textMuted,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 4),
-                              // Label bacaan
-                              Text(
-                                bacaan,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: AppTheme.textMuted,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    );
-                  }).toList(),
+                            );
+                          }).toList(),
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
             ],

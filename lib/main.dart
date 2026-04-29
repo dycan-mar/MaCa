@@ -15,7 +15,7 @@ class IqraHanacakaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: "Iqra' Hanacaraka",
+      title: "MACA Aksara Jawa",
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
       routerConfig: appRouter,

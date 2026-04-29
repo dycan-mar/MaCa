@@ -38,6 +38,8 @@ dependencies:
   shared_preferences: ^2.3.0  
 
 dev_dependencies:
+  flutter_launcher_icons: ^0.14.1
+
   flutter_test:
     sdk: flutter
 
@@ -50,7 +52,13 @@ dev_dependencies:
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
-
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/image/iconMaca.png"  # ← path icon kamu
+  web:
+    generate: true
+    image_path: "assets/image/iconMaca.png"
 # The following section is specific to Flutter packages.
 flutter:
 
